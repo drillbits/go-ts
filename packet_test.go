@@ -293,6 +293,7 @@ func TestPacketAdaptationField(t *testing.T) {
 
 // TODO
 func TestPacketPayload(t *testing.T) {}
+func TestPacketIsPES(t *testing.T)   {}
 
 func TestAdaptationFieldAdaptationFieldLength(t *testing.T) {
 	for i, tc := range []struct {

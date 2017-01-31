@@ -132,6 +132,20 @@ func (p Packet) Payload() []byte {
 	return p[low:len(p)]
 }
 
+// IsPES reports whether the packet is Packetized Elementary Stream (PES).
+func (p Packet) IsPES() bool {
+	if !p.HasPayload() {
+		return false
+	}
+	payload := p.Payload()
+	if len(payload) < 3 {
+		return false
+	}
+	return (payload[0] == 0x00 &&
+		payload[1] == 0x00 &&
+		payload[2] == 0x01)
+}
+
 // Length returns number of bytes in the adaptation field immediately following this byte.
 func (af AdaptationField) Length() int {
 	return int(af[0])
