@@ -54,5 +54,7 @@ func splitPacket(data []byte, atEOF bool) (advance int, token []byte, err error)
 
 // Packet returns bytes as Packet.
 func (s *PacketScanner) Packet() Packet {
-	return s.Bytes()
+	buf := make([]byte, len(s.Bytes()))
+	copy(buf, s.Bytes())
+	return buf
 }
