@@ -58,6 +58,26 @@ func TestPacketSyncByte(t *testing.T) {
 func TestPacketTransportErrorIndicator(t *testing.T) {
 	for i, tc := range []struct {
 		p   Packet
+		exp byte
+	}{
+		{Packet{0x47, 0x80}, 1},
+		{Packet{0x47, 0x00}, 0},
+	} {
+		i, tc := i, tc
+		t.Run("", func(t *testing.T) {
+			t.Parallel()
+
+			got := tc.p.TransportErrorIndicator()
+			if got != tc.exp {
+				t.Errorf("%0d: Packet %08b TransportErrorIndicator() => %b, want %b", i, tc.p, got, tc.exp)
+			}
+		})
+	}
+}
+
+func TestPacketHasTransportError(t *testing.T) {
+	for i, tc := range []struct {
+		p   Packet
 		exp bool
 	}{
 		{Packet{0x47, 0x80}, true},
@@ -67,9 +87,9 @@ func TestPacketTransportErrorIndicator(t *testing.T) {
 		t.Run("", func(t *testing.T) {
 			t.Parallel()
 
-			got := tc.p.TransportErrorIndicator()
+			got := tc.p.HasTransportError()
 			if got != tc.exp {
-				t.Errorf("%0d: Packet %08b TransportErrorIndicator() => %t, want %t", i, tc.p, got, tc.exp)
+				t.Errorf("%0d: Packet %08b HasTransportError() => %t, want %t", i, tc.p, got, tc.exp)
 			}
 		})
 	}
@@ -78,10 +98,10 @@ func TestPacketTransportErrorIndicator(t *testing.T) {
 func TestPacketPayloadUnitStartIndicator(t *testing.T) {
 	for i, tc := range []struct {
 		p   Packet
-		exp bool
+		exp byte
 	}{
-		{Packet{0x47, 0x40}, true},
-		{Packet{0x47, 0x00}, false},
+		{Packet{0x47, 0x40}, 1},
+		{Packet{0x47, 0x00}, 0},
 	} {
 		i, tc := i, tc
 		t.Run("", func(t *testing.T) {
@@ -89,7 +109,7 @@ func TestPacketPayloadUnitStartIndicator(t *testing.T) {
 
 			got := tc.p.PayloadUnitStartIndicator()
 			if got != tc.exp {
-				t.Errorf("%0d: Packet %08b PayloadUnitStartIndicator() => %t, want %t", i, tc.p, got, tc.exp)
+				t.Errorf("%0d: Packet %08b PayloadUnitStartIndicator() => %b, want %b", i, tc.p, got, tc.exp)
 			}
 		})
 	}
@@ -98,10 +118,10 @@ func TestPacketPayloadUnitStartIndicator(t *testing.T) {
 func TestPacketTransportPriority(t *testing.T) {
 	for i, tc := range []struct {
 		p   Packet
-		exp bool
+		exp byte
 	}{
-		{Packet{0x47, 0x20}, true},
-		{Packet{0x47, 0x00}, false},
+		{Packet{0x47, 0x20}, 1},
+		{Packet{0x47, 0x00}, 0},
 	} {
 		i, tc := i, tc
 		t.Run("", func(t *testing.T) {
@@ -109,7 +129,7 @@ func TestPacketTransportPriority(t *testing.T) {
 
 			got := tc.p.TransportPriority()
 			if got != tc.exp {
-				t.Errorf("%0d: Packet %08b TransportPriority() => %t, want %t", i, tc.p, got, tc.exp)
+				t.Errorf("%0d: Packet %08b TransportPriority() => %b, want %b", i, tc.p, got, tc.exp)
 			}
 		})
 	}
@@ -318,10 +338,10 @@ func TestAdaptationFieldAdaptationFieldLength(t *testing.T) {
 func TestDiscontinuityIndicator(t *testing.T) {
 	for i, tc := range []struct {
 		af  AdaptationField
-		exp bool
+		exp byte
 	}{
-		{AdaptationField{0xB7, 0x7F}, false},
-		{AdaptationField{0xB7, 0x80}, true},
+		{AdaptationField{0xB7, 0x7F}, 0},
+		{AdaptationField{0xB7, 0x80}, 1},
 	} {
 		i, tc := i, tc
 		t.Run("", func(t *testing.T) {
@@ -329,7 +349,7 @@ func TestDiscontinuityIndicator(t *testing.T) {
 
 			got := tc.af.DiscontinuityIndicator()
 			if got != tc.exp {
-				t.Errorf("%0d: AdaptationField %08b DiscontinuityIndicator() => %t, want %t", i, tc.af, got, tc.exp)
+				t.Errorf("%0d: AdaptationField %08b DiscontinuityIndicator() => %b, want %b", i, tc.af, got, tc.exp)
 			}
 		})
 	}
@@ -338,10 +358,10 @@ func TestDiscontinuityIndicator(t *testing.T) {
 func TestRandomAccessIndicator(t *testing.T) {
 	for i, tc := range []struct {
 		af  AdaptationField
-		exp bool
+		exp byte
 	}{
-		{AdaptationField{0xB7, 0xBF}, false},
-		{AdaptationField{0xB7, 0x40}, true},
+		{AdaptationField{0xB7, 0xBF}, 0},
+		{AdaptationField{0xB7, 0x40}, 1},
 	} {
 		i, tc := i, tc
 		t.Run("", func(t *testing.T) {
@@ -349,7 +369,7 @@ func TestRandomAccessIndicator(t *testing.T) {
 
 			got := tc.af.RandomAccessIndicator()
 			if got != tc.exp {
-				t.Errorf("%0d: AdaptationField %08b RandomAccessIndicator() => %t, want %t", i, tc.af, got, tc.exp)
+				t.Errorf("%0d: AdaptationField %08b RandomAccessIndicator() => %b, want %b", i, tc.af, got, tc.exp)
 			}
 		})
 	}
@@ -358,10 +378,10 @@ func TestRandomAccessIndicator(t *testing.T) {
 func TestElementaryStreamPriorityIndicator(t *testing.T) {
 	for i, tc := range []struct {
 		af  AdaptationField
-		exp bool
+		exp byte
 	}{
-		{AdaptationField{0xB7, 0xDF}, false},
-		{AdaptationField{0xB7, 0x20}, true},
+		{AdaptationField{0xB7, 0xDF}, 0},
+		{AdaptationField{0xB7, 0x20}, 1},
 	} {
 		i, tc := i, tc
 		t.Run("", func(t *testing.T) {
@@ -369,7 +389,7 @@ func TestElementaryStreamPriorityIndicator(t *testing.T) {
 
 			got := tc.af.ElementaryStreamPriorityIndicator()
 			if got != tc.exp {
-				t.Errorf("%0d: AdaptationField %08b ElementaryStreamPriorityIndicator() => %t, want %t", i, tc.af, got, tc.exp)
+				t.Errorf("%0d: AdaptationField %08b ElementaryStreamPriorityIndicator() => %b, want %b", i, tc.af, got, tc.exp)
 			}
 		})
 	}

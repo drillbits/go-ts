@@ -167,7 +167,7 @@ func ReadPacket(r io.Reader, rxs []*PacketReceiver, done chan bool, fail chan er
 				if err != nil {
 					fail <- err
 				}
-				if af != nil && af.DiscontinuityIndicator() {
+				if af != nil && af.IsDiscontinuous() {
 					rx.cc = -1
 				}
 				// check continuously
@@ -180,7 +180,7 @@ func ReadPacket(r io.Reader, rxs []*PacketReceiver, done chan bool, fail chan er
 				if p.IsPES() {
 					err = errors.New("TODO: PES cannot merge")
 				} else {
-					err = rx.mergePSI(p.Payload(), p.PayloadUnitStartIndicator())
+					err = rx.mergePSI(p.Payload(), p.PayloadUnitStartIndicator() == 1)
 				}
 				if err != nil {
 					fail <- err

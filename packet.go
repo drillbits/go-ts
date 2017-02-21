@@ -16,51 +16,58 @@ package ts
 
 import "io"
 
+// SyncByte is used to identify the start of the TS Packet.
+const SyncByte = 0x47
+
 // Packet is a Transport Stream(TS) packet.
 type Packet []byte
 
-// PID is a Packet Identifier, describing the payload data.
+// PID is a packet identifier, describing the payload data.
 type PID uint16
 
 // AdaptationField is an extended TS header.
 type AdaptationField []byte
 
-// AdaptationExtensionField is an extention of adaptation field.
+// AdaptationExtensionField is an extension of the adaptation field.
 type AdaptationExtensionField []byte
 
-const (
-	// SyncByte is used to identify the start of the TS Packet.
-	SyncByte = 0x47
-)
+// PCR is a Program clock reference.
+type PCR []byte
 
-// TS Header
+// OPCR is a Original program clock reference.
+type OPCR []byte
 
-// SyncByte returns the Sync byte.
+// SyncByte returns the sync_byte.
 func (p Packet) SyncByte() byte {
 	return p[0]
 }
 
-// TransportErrorIndicator returns the Transport Error Indicator(TEI).
-func (p Packet) TransportErrorIndicator() bool {
-	return p[1]&0x80>>7 == 1
+// TransportErrorIndicator returns the transport_error_indicator(TEI).
+func (p Packet) TransportErrorIndicator() byte {
+	return p[1] & 0x80 >> 7
 }
 
-// PayloadUnitStartIndicator returns the Payload Unit Start Indicator(PUSI).
-func (p Packet) PayloadUnitStartIndicator() bool {
-	return p[1]&0x40>>6 == 1
+// HasTransportError indicates that the packet has at least 1 uncorrectable bit error.
+func (p Packet) HasTransportError() bool {
+	return p.TransportErrorIndicator() == 1
 }
 
-// TransportPriority returns the Transport Priority.
-func (p Packet) TransportPriority() bool {
-	return p[1]&0x20>>5 == 1
+// PayloadUnitStartIndicator returns the payload_unit_start_indicator(PUSI).
+func (p Packet) PayloadUnitStartIndicator() byte {
+	return p[1] & 0x40 >> 6
 }
 
-// PID returns the Packet Identifier(PID).
+// TransportPriority returns the transport_priority.
+func (p Packet) TransportPriority() byte {
+	return p[1] & 0x20 >> 5
+}
+
+// PID returns the PID.
 func (p Packet) PID() PID {
 	return PID(uint16(p[1]&0x1f)<<8 | uint16(p[2]))
 }
 
-// TransportScramblingControl returns the Transport Scrambling Control(TSC).
+// TransportScramblingControl returns the transport_scrambling_control(TSC).
 // - 0x00(00): not scrambled
 // - 0x01(01): reserved for future use
 // - 0x02(10): scrambled with even key
@@ -69,7 +76,7 @@ func (p Packet) TransportScramblingControl() byte {
 	return p[3] & 0xc0 >> 6
 }
 
-// AdaptationFieldControl returns the Adaptation field control code.
+// AdaptationFieldControl returns the adaptation_field_control.
 // - 0x00(00): reserved for future use
 // - 0x01(01): no adaptation field, payload only
 // - 0x02(10): adaptation field only, no payload
@@ -78,7 +85,7 @@ func (p Packet) AdaptationFieldControl() byte {
 	return p[3] & 0x30 >> 4
 }
 
-// HasAdaptationField reports whether the packet has adaptation field.
+// HasAdaptationField reports whether the packet has the adaptation_field.
 func (p Packet) HasAdaptationField() bool {
 	ctrl := p.AdaptationFieldControl()
 	return ctrl == 0x02 || ctrl == 0x03
@@ -90,12 +97,12 @@ func (p Packet) HasPayload() bool {
 	return ctrl == 0x01 || ctrl == 0x03
 }
 
-// ContinuityCounter returns Continuity counter.
+// ContinuityCounter returns the continuity_counter.
 func (p Packet) ContinuityCounter() uint8 {
 	return p[3] & 0x0F
 }
 
-// AdaptationFieldLength returns number of bytes in the adaptation field immediately following this byte.
+// AdaptationFieldLength returns the adaptation_field_length that specifying the number of bytes in the adaptation field immediately following this byte.
 func (p Packet) AdaptationFieldLength() int {
 	if !p.HasAdaptationField() {
 		return 0
@@ -103,7 +110,7 @@ func (p Packet) AdaptationFieldLength() int {
 	return int(p[4])
 }
 
-// AdaptationField returns the adaptation field.
+// AdaptationField returns the adaptation_field.
 func (p Packet) AdaptationField() (AdaptationField, error) {
 	if !p.HasAdaptationField() {
 		return nil, nil
@@ -132,7 +139,7 @@ func (p Packet) Payload() []byte {
 	return p[low:len(p)]
 }
 
-// IsPES reports whether the packet is Packetized Elementary Stream (PES).
+// IsPES reports whether the packet is Packetized Elementary Stream(PES).
 func (p Packet) IsPES() bool {
 	if !p.HasPayload() {
 		return false
@@ -146,94 +153,91 @@ func (p Packet) IsPES() bool {
 		payload[2] == 0x01)
 }
 
-// Length returns number of bytes in the adaptation field immediately following this byte.
+// Length returns the adaptation_field_length that specifying the number of bytes in the adaptation field immediately following this byte.
 func (af AdaptationField) Length() int {
 	return int(af[0])
 }
 
-// DiscontinuityIndicator returns Discontinuity indicator.
-func (af AdaptationField) DiscontinuityIndicator() bool {
-	i := af[1] & 0x80 >> 7
-	return i == 1
+// DiscontinuityIndicator returns the discontinuity_indicator.
+func (af AdaptationField) DiscontinuityIndicator() byte {
+	return af[1] & 0x80 >> 7
 }
 
-// RandomAccessIndicator returns Random Access indicator.
-func (af AdaptationField) RandomAccessIndicator() bool {
-	i := af[1] & 0x40 >> 6
-	return i == 1
+// IsDiscontinuous reports whether the packet is discontinuous.
+func (af AdaptationField) IsDiscontinuous() bool {
+	return af.DiscontinuityIndicator() == 1
 }
 
-// ElementaryStreamPriorityIndicator returns Elementary stream priority indicator.
-func (af AdaptationField) ElementaryStreamPriorityIndicator() bool {
-	i := af[1] & 0x20 >> 5
-	return i == 1
+// RandomAccessIndicator returns the random_access_indicator.
+func (af AdaptationField) RandomAccessIndicator() byte {
+	return af[1] & 0x40 >> 6
 }
 
-// PCRFlag returns PCR flag.
-func (af AdaptationField) PCRFlag() bool {
-	i := af[1] & 0x10 >> 4
-	return i == 1
+// ElementaryStreamPriorityIndicator returns the elementary_stream_priority_indicator.
+func (af AdaptationField) ElementaryStreamPriorityIndicator() byte {
+	return af[1] & 0x20 >> 5
 }
 
-// HasPCR reports whether the adaptation field has PCR.
+// PCRFlag returns the PCR_flag.
+func (af AdaptationField) PCRFlag() byte {
+	return af[1] & 0x10 >> 4
+}
+
+// HasPCR reports whether the adaptation field has the PCR.
 func (af AdaptationField) HasPCR() bool {
-	return af.PCRFlag()
+	return af.PCRFlag() == 1
 }
 
-// OPCRFlag returns OPCR flag.
-func (af AdaptationField) OPCRFlag() bool {
-	i := af[1] & 0x08 >> 3
-	return i == 1
+// OPCRFlag returns the OPCR_flag.
+func (af AdaptationField) OPCRFlag() byte {
+	return af[1] & 0x08 >> 3
 }
 
-// HasOPCR reports whether the adaptation field has OPCR.
+// HasOPCR reports whether the adaptation field has the OPCR.
 func (af AdaptationField) HasOPCR() bool {
-	return af.OPCRFlag()
+	return af.OPCRFlag() == 1
 }
 
-// SplicingPointFlag returns Splicing point flag.
-func (af AdaptationField) SplicingPointFlag() bool {
-	i := af[1] & 0x04 >> 2
-	return i == 1
+// SplicingPointFlag returns the splicing_point_flag.
+func (af AdaptationField) SplicingPointFlag() byte {
+	return af[1] & 0x04 >> 2
 }
 
-// HasSpliceCountdown reports whether the adaptation field has splice countdown.
+// HasSpliceCountdown reports whether the adaptation field has the splice_countdown.
 func (af AdaptationField) HasSpliceCountdown() bool {
-	return af.SplicingPointFlag()
+	return af.SplicingPointFlag() == 1
 }
 
-// TransportPrivateDataFlag returns Transport private data flag.
-func (af AdaptationField) TransportPrivateDataFlag() bool {
-	i := af[1] & 0x02 >> 1
-	return i == 1
+// TransportPrivateDataFlag returns the transport_private_data_flag.
+func (af AdaptationField) TransportPrivateDataFlag() byte {
+	return af[1] & 0x02 >> 1
 }
 
-// HasTransportPrivateData reports whether the adaptation field has transport private data.
+// HasTransportPrivateData reports whether the adaptation field has the private_data.
 func (af AdaptationField) HasTransportPrivateData() bool {
-	return af.TransportPrivateDataFlag()
+	return af.TransportPrivateDataFlag() == 1
 }
 
-// AdaptationFieldExtensionFlag returns Adaptation field extension flag.
-func (af AdaptationField) AdaptationFieldExtensionFlag() bool {
-	i := af[1] & 0x01
-	return i == 1
+// AdaptationFieldExtensionFlag returns the adaptation_field_extension_flag.
+func (af AdaptationField) AdaptationFieldExtensionFlag() byte {
+	return af[1] & 0x01
 }
 
-// HasExtension reports whether the adaptation field has extension.
+// HasExtension reports whether the adaptation field has the extension.
 func (af AdaptationField) HasExtension() bool {
-	return af.AdaptationFieldExtensionFlag()
+	return af.AdaptationFieldExtensionFlag() == 1
 }
 
-// PCR returns Program clock reference.
-func (af AdaptationField) PCR() []byte {
+// PCR returns the PCR.
+func (af AdaptationField) PCR() PCR {
 	if !af.HasPCR() {
 		return nil
 	}
-	return af[2:8]
+	return PCR(af[2:8])
 }
 
-// OPCR returns Original program clock reference.
-func (af AdaptationField) OPCR() []byte {
+// OPCR returns the OPCR.
+func (af AdaptationField) OPCR() OPCR {
 	if !af.HasOPCR() {
 		return nil
 	}
@@ -242,10 +246,10 @@ func (af AdaptationField) OPCR() []byte {
 		low += 6
 	}
 	high := low + 6
-	return af[low:high]
+	return OPCR(af[low:high])
 }
 
-// SpliceCountdown indicates how many TS packets from this one a splicing point occurs.
+// SpliceCountdown returns the splice_countdown that indicates how many TS packets from this one a splicing point occurs.
 func (af AdaptationField) SpliceCountdown() int8 {
 	if !af.HasSpliceCountdown() {
 		return 0
@@ -261,7 +265,7 @@ func (af AdaptationField) SpliceCountdown() int8 {
 	return int8(af[low])
 }
 
-// TransportPrivateDataLength returns number of bytes in the transport private data immediately following this byte.
+// TransportPrivateDataLength returns the transport_private_data_length that indicates the number of bytes in the transport private data immediately following this byte.
 func (af AdaptationField) TransportPrivateDataLength() int {
 	if !af.HasTransportPrivateData() {
 		return 0
@@ -279,7 +283,7 @@ func (af AdaptationField) TransportPrivateDataLength() int {
 	return int(af[low])
 }
 
-// TransportPrivateData returns private data.
+// TransportPrivateData returns the private_data_byte.
 func (af AdaptationField) TransportPrivateData() []byte {
 	if !af.HasTransportPrivateData() {
 		return nil
@@ -300,7 +304,7 @@ func (af AdaptationField) TransportPrivateData() []byte {
 	return af[low:high]
 }
 
-// AdaptationExtension returns Adaptation field extension.
+// AdaptationExtension returns the AdaptationExtensionField.
 func (af AdaptationField) AdaptationExtension() (AdaptationExtensionField, error) {
 	if !af.HasExtension() {
 		return nil, nil
@@ -330,7 +334,7 @@ func (af AdaptationField) AdaptationExtension() (AdaptationExtensionField, error
 	return AdaptationExtensionField(af[low:high]), nil
 }
 
-// AdaptationExtensionLength returns number of bytes in the adaptation extension field immediately following this byte.
+// AdaptationExtensionLength returns the adaptation_field_extension_length that indicates the number of bytes in the adaptation extension field immediately following this byte.
 func (af AdaptationField) AdaptationExtensionLength() int {
 	if !af.HasExtension() {
 		return 0
