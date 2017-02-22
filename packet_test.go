@@ -20,22 +20,6 @@ import (
 	"testing"
 )
 
-func appendBytes(bs ...[]byte) []byte {
-	var buf []byte
-	for _, b := range bs {
-		buf = append(buf, b...)
-	}
-	return buf
-}
-
-func bx(b []byte, times int) []byte {
-	var buf []byte
-	for i := 0; i < times; i++ {
-		buf = append(buf, b...)
-	}
-	return buf
-}
-
 func TestPacketSyncByte(t *testing.T) {
 	for i, tc := range []struct {
 		p   Packet

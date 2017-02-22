@@ -64,7 +64,7 @@ func (p Packet) TransportPriority() byte {
 
 // PID returns the PID.
 func (p Packet) PID() PID {
-	return PID(uint16(p[1]&0x1f)<<8 | uint16(p[2]))
+	return PID(uint16(p[2]) | uint16(p[1]&0x1f)<<8)
 }
 
 // TransportScramblingControl returns the transport_scrambling_control(TSC).
@@ -115,12 +115,12 @@ func (p Packet) AdaptationField() (AdaptationField, error) {
 	if !p.HasAdaptationField() {
 		return nil, nil
 	}
-	l := p.AdaptationFieldLength()
-	if l <= 0 {
+	size := p.AdaptationFieldLength()
+	if size <= 0 {
 		return nil, nil
 	}
 	low := 4
-	high := 5 + l
+	high := 5 + size
 	if high > len(p) {
 		return nil, io.ErrUnexpectedEOF
 	}
@@ -309,8 +309,8 @@ func (af AdaptationField) AdaptationExtension() (AdaptationExtensionField, error
 	if !af.HasExtension() {
 		return nil, nil
 	}
-	l := af.AdaptationExtensionLength()
-	if l <= 0 {
+	size := af.AdaptationExtensionLength()
+	if size <= 0 {
 		return nil, nil
 	}
 	low := 2
@@ -327,7 +327,7 @@ func (af AdaptationField) AdaptationExtension() (AdaptationExtensionField, error
 		low++ // Transport private data length
 		low += af.TransportPrivateDataLength()
 	}
-	high := low + l
+	high := low + size
 	if high > len(af) {
 		return nil, io.ErrUnexpectedEOF
 	}

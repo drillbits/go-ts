@@ -49,17 +49,18 @@ func NewPacketReceiver(pid PID, ch chan []byte) *PacketReceiver {
 	}
 }
 
-func (rx *PacketReceiver) checkContinuously(pid PID, cc int) bool {
+func (rx *PacketReceiver) checkContinuously(pid PID, cc uint8) bool {
+	intCC := int(cc)
 	if rx.cc == -1 || pid == 0x1FFF { // Null packet
-		rx.cc = cc
+		rx.cc = intCC
 	} else {
 		// check drop
 		drop := false
 		pre := rx.cc
 		exp := pre + 1
-		rx.cc = cc
+		rx.cc = intCC
 		// dup
-		if pre == cc {
+		if pre == intCC {
 			if rx.dup < 1 {
 				// pass: not drop, skip this packet
 				return false
@@ -69,7 +70,7 @@ func (rx *PacketReceiver) checkContinuously(pid PID, cc int) bool {
 			rx.dup = 0
 		}
 		// continuous
-		if exp != cc {
+		if exp != intCC {
 			drop = true
 		}
 		// drop
@@ -131,9 +132,9 @@ func (rx *PacketReceiver) mergePSI(data []byte, atStart bool) error {
 func (rx *PacketReceiver) initBuffer(data []byte, pos int) int {
 	rx.tmpLen = 0
 	rx.secLen = int(uint16(data[pos+1]&0x0F)<<8 | uint16(data[pos+2]))
-	// set table_id - section_length
+	// set table_id .. section_length
 	rx.buf = data[pos : pos+3]
-	pos += 3 // table_id - section_length
+	pos += 3 // table_id .. section_length
 	return pos
 }
 
@@ -154,7 +155,8 @@ func (rx *PacketReceiver) sendIfSectionMerged() {
 	rx.tmpLen = 0
 }
 
-// ReadPacket reads the packets from 'r' and sends the marged packet by PID to each channel.
+// ReadPacket reads the packets from 'r' and sends the marged packet by PID
+// to each channel.
 func ReadPacket(r io.Reader, rxs []*PacketReceiver, done chan bool, fail chan error) {
 	s := NewPacketScanner(r)
 	for s.Scan() {
@@ -170,8 +172,9 @@ func ReadPacket(r io.Reader, rxs []*PacketReceiver, done chan bool, fail chan er
 				if af != nil && af.IsDiscontinuous() {
 					rx.cc = -1
 				}
+
 				// check continuously
-				ok := rx.checkContinuously(p.PID(), int(p.ContinuityCounter()))
+				ok := rx.checkContinuously(p.PID(), p.ContinuityCounter())
 				if !ok {
 					continue loop
 				}
