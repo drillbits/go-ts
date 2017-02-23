@@ -123,7 +123,7 @@ func (a assoc) number() ProgramNumber {
 }
 
 func (a assoc) pid() PID {
-	return PID(uint16(a[3]) | uint16(a[2]&0x1f)<<8)
+	return PID(uint16(a[3]) | uint16(a[2]&0x1F)<<8)
 }
 
 func (t PAT) associations() []assoc {

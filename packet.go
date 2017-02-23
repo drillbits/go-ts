@@ -16,14 +16,34 @@ package ts
 
 import "io"
 
-// SyncByte is used to identify the start of the TS Packet.
-const SyncByte = 0x47
+const (
+	// SyncByte is used to identify the start of the TS Packet.
+	SyncByte = 0x47
+
+	// PIDPAT is the PID for PAT.
+	PIDPAT = 0x0000
+
+	// PIDCAT is the PID for CAT.
+	PIDCAT = 0x0001
+
+	// PIDTSDT is the PID for PMT.
+	PIDTSDT = 0x0002
+
+	// PIDIPMP is the PID for IPMP.
+	PIDIPMP = 0x0003
+
+	// PIDNull is the PID for null packet.
+	PIDNull = 0x1FFF
+)
 
 // Packet is a Transport Stream(TS) packet.
 type Packet []byte
 
 // PID is a packet identifier, describing the payload data.
 type PID uint16
+
+// Payload is a payload of the packet.
+type Payload []byte
 
 // AdaptationField is an extended TS header.
 type AdaptationField []byte
@@ -55,6 +75,11 @@ func (p Packet) HasTransportError() bool {
 // PayloadUnitStartIndicator returns the payload_unit_start_indicator(PUSI).
 func (p Packet) PayloadUnitStartIndicator() byte {
 	return p[1] & 0x40 >> 6
+}
+
+// IsPayloadUnitStart reports whether the payload will commence with the first byte of a packet.
+func (p Packet) IsPayloadUnitStart() bool {
+	return p.PayloadUnitStartIndicator() == 1
 }
 
 // TransportPriority returns the transport_priority.
@@ -128,7 +153,7 @@ func (p Packet) AdaptationField() (AdaptationField, error) {
 }
 
 // Payload returns the payload.
-func (p Packet) Payload() []byte {
+func (p Packet) Payload() Payload {
 	if !p.HasPayload() {
 		return nil
 	}
@@ -136,7 +161,7 @@ func (p Packet) Payload() []byte {
 	if p.HasAdaptationField() {
 		low += p.AdaptationFieldLength() + 1
 	}
-	return p[low:len(p)]
+	return Payload(p[low:len(p)])
 }
 
 // IsPES reports whether the packet is Packetized Elementary Stream(PES).
@@ -144,13 +169,28 @@ func (p Packet) IsPES() bool {
 	if !p.HasPayload() {
 		return false
 	}
-	payload := p.Payload()
-	if len(payload) < 3 {
+	return p.Payload().IsPES()
+}
+
+// IsPES reports whether the packet is Packetized Elementary Stream(PES).
+func (p Payload) IsPES() bool {
+	if len(p) < 3 {
 		return false
 	}
-	return (payload[0] == 0x00 &&
-		payload[1] == 0x00 &&
-		payload[2] == 0x01)
+	return p[0] == 0x00 && p[1] == 0x00 && p[2] == 0x01
+}
+
+// IsPSI reports whether the packet is Program Specific Information(PSI).
+func (p Payload) IsPSI() bool {
+	return !p.IsPES()
+}
+
+// PointerField returns the pointer_field.
+func (p Payload) PointerField() int {
+	if p.IsPES() {
+		return 0
+	}
+	return int(p[0])
 }
 
 // Length returns the adaptation_field_length that specifying the number of bytes in the adaptation field immediately following this byte.
