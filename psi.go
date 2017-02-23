@@ -194,5 +194,5 @@ func (t CAT) LastSectionNumber() byte {
 
 // Descriptors returns the descriptors.
 func (t CAT) Descriptors() []Descriptor {
-	return Descriptors(t[8:])
+	return Descriptors(t[8 : len(t)-crc32size])
 }

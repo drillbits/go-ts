@@ -31,8 +31,8 @@ func (d Descriptor) Length() int {
 func Descriptors(b []byte) []Descriptor {
 	headsize := 2 // size of descriptor_tag .. descriptor_length
 	var descriptors []Descriptor
-	for pos := 0; pos < len(b)-crc32size; {
-		size := headsize + int(b[pos+1]) // descriptor_length
+	for pos := 0; pos < len(b); {
+		size := headsize + Descriptor(b[pos:]).Length()
 		d := Descriptor(b[pos : pos+size])
 		pos += len(d)
 		descriptors = append(descriptors, d)

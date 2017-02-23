@@ -101,7 +101,7 @@ func TestPAT(t *testing.T) {
 					t.Errorf("%0d: PAT(0x%04X).TransportStreamID() => 0x%04X, want 0x%04X", i, tc.b, pat.TransportStreamID(), tc.tsID)
 				}
 				if pat.VersionNumber() != tc.ver {
-					t.Errorf("%0d: PAT(0x%04X).VersionNumber() => %d, want%d", i, tc.b, pat.VersionNumber(), tc.ver)
+					t.Errorf("%0d: PAT(0x%04X).VersionNumber() => %d, want %d", i, tc.b, pat.VersionNumber(), tc.ver)
 				}
 				if pat.CurrentNextIndicator() != tc.curNextInd {
 					t.Errorf("%0d: PAT(0x%04X).CurrentNextIndicator() => 0x%04X, want 0x%04X", i, tc.b, pat.CurrentNextIndicator(), tc.curNextInd)
@@ -246,7 +246,7 @@ func TestCAT(t *testing.T) {
 					t.Errorf("%0d: CAT(0x%04X).CRC32() => 0x%04X, want 0x%04X", i, tc.b, PSI(cat).CRC32(), tc.crc32)
 				}
 				if cat.VersionNumber() != tc.ver {
-					t.Errorf("%0d: CAT(0x%04X).VersionNumber() => %d, want%d", i, tc.b, cat.VersionNumber(), tc.ver)
+					t.Errorf("%0d: CAT(0x%04X).VersionNumber() => %d, want %d", i, tc.b, cat.VersionNumber(), tc.ver)
 				}
 				if cat.CurrentNextIndicator() != tc.curNextInd {
 					t.Errorf("%0d: CAT(0x%04X).CurrentNextIndicator() => 0x%04X, want 0x%04X", i, tc.b, cat.CurrentNextIndicator(), tc.curNextInd)
