@@ -196,3 +196,108 @@ func (t CAT) LastSectionNumber() byte {
 func (t CAT) Descriptors() []Descriptor {
 	return Descriptors(t[8 : len(t)-crc32size])
 }
+
+// PMT is a Program Map Table.
+type PMT PSI
+
+// NewPMT returns a new PMT.
+func NewPMT(b []byte) (PMT, error) {
+	minsize := 16
+	if len(b) < minsize {
+		return nil, ErrTooShort
+	}
+	return PMT(b), nil
+}
+
+// ProgramNumber returns the TransportStreamID.
+func (t PMT) ProgramNumber() ProgramNumber {
+	return ProgramNumber(binary.BigEndian.Uint16(t[3:5]))
+}
+
+// VersionNumber returns the version_number.
+func (t PMT) VersionNumber() int {
+	return versionNumber(t)
+}
+
+// CurrentNextIndicator returns the current_next_indicator.
+func (t PMT) CurrentNextIndicator() byte {
+	return currentNextIndicator(t)
+}
+
+// SectionNumber returns the section_number.
+func (t PMT) SectionNumber() byte {
+	return sectionNumber(t)
+}
+
+// LastSectionNumber returns the last_section_number.
+func (t PMT) LastSectionNumber() byte {
+	return lastSectionNumber(t)
+}
+
+// PCRPID returns the PCR_PID.
+func (t PMT) PCRPID() PID {
+	return PID(uint16(t[9]) | uint16(t[8]&0x1F)<<8)
+}
+
+// ProgramInfoLength returns the program_info_length.
+func (t PMT) ProgramInfoLength() int {
+	return int(uint16(t[11]) | uint16(t[10]&0x0F)<<8)
+}
+
+// Descriptors returns the descriptors.
+func (t PMT) Descriptors() []Descriptor {
+	return Descriptors(t[12 : 12+t.ProgramInfoLength()])
+}
+
+// ElementInfo returns the list of ProgramElementInfo.
+func (t PMT) ElementInfo() []ProgramElementInfo {
+	headsize := 5 // stream_type .. ES_info_length
+	var info []ProgramElementInfo
+	pos := 12 + t.ProgramInfoLength()
+	for pos < len(t)-crc32size {
+		size := headsize + ProgramElementInfo(t[pos:]).ESInfoLength()
+		i := ProgramElementInfo(t[pos : pos+size])
+		pos += len(i)
+		info = append(info, i)
+	}
+	return info
+}
+
+// ProgramElementInfo is an information for program element.
+type ProgramElementInfo []byte
+
+// StreamType returns the stream_type.
+func (i ProgramElementInfo) StreamType() byte {
+	return i[0]
+}
+
+// ElementaryPID returns the elementary_PID.
+func (i ProgramElementInfo) ElementaryPID() PID {
+	return PID(uint16(i[2]) | uint16(i[1]&0x1F)<<8)
+}
+
+// ESInfoLength returns the ES_info_length.
+func (i ProgramElementInfo) ESInfoLength() int {
+	return int(uint16(i[4]) | uint16(i[3]&0x0F)<<8)
+}
+
+// Descriptors returns the descriptors.
+func (i ProgramElementInfo) Descriptors() []Descriptor {
+	return Descriptors(i[5:])
+}
+
+func versionNumber(b []byte) int {
+	return int(b[5] & 0x3E >> 1)
+}
+
+func currentNextIndicator(b []byte) byte {
+	return b[5] & 0x01
+}
+
+func sectionNumber(b []byte) byte {
+	return b[6]
+}
+
+func lastSectionNumber(b []byte) byte {
+	return b[7]
+}
