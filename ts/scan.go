@@ -165,7 +165,7 @@ func (sec *sectionBuffer) init(payload Payload) int {
 }
 
 func (sec *sectionBuffer) isContinuous(pid PID, cc int) bool {
-	if sec.cc == -1 || pid == PIDNull {
+	if sec.cc == -1 || pid == PidNull {
 		sec.cc = cc
 		return true
 	}

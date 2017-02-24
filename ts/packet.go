@@ -20,20 +20,20 @@ const (
 	// SyncByte is used to identify the start of the TS Packet.
 	SyncByte = 0x47
 
-	// PIDPAT is the PID for PAT.
-	PIDPAT = 0x0000
+	// PidPAT is the PID for PAT.
+	PidPAT = 0x0000
 
-	// PIDCAT is the PID for CAT.
-	PIDCAT = 0x0001
+	// PidCAT is the PID for CAT.
+	PidCAT = 0x0001
 
-	// PIDTSDT is the PID for PMT.
-	PIDTSDT = 0x0002
+	// PidTSDT is the PID for PMT.
+	PidTSDT = 0x0002
 
-	// PIDIPMP is the PID for IPMP.
-	PIDIPMP = 0x0003
+	// PidIPMP is the PID for IPMP.
+	PidIPMP = 0x0003
 
-	// PIDNull is the PID for null packet.
-	PIDNull = 0x1FFF
+	// PidNull is the PID for null packet.
+	PidNull = 0x1FFF
 )
 
 // Packet is a Transport Stream(TS) packet.
