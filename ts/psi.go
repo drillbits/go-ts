@@ -98,22 +98,22 @@ func (t PAT) TransportStreamID() TransportStreamID {
 
 // VersionNumber returns the version_number.
 func (t PAT) VersionNumber() int {
-	return versionNumber(t)
+	return VersionNumber(t)
 }
 
 // CurrentNextIndicator returns the current_next_indicator.
 func (t PAT) CurrentNextIndicator() byte {
-	return currentNextIndicator(t)
+	return CurrentNextIndicator(t)
 }
 
 // SectionNumber returns the section_number.
 func (t PAT) SectionNumber() byte {
-	return sectionNumber(t)
+	return SectionNumber(t)
 }
 
 // LastSectionNumber returns the last_section_number.
 func (t PAT) LastSectionNumber() byte {
-	return lastSectionNumber(t)
+	return LastSectionNumber(t)
 }
 
 type assoc []byte
@@ -174,22 +174,22 @@ func NewCAT(b []byte) (CAT, error) {
 
 // VersionNumber returns the version_number.
 func (t CAT) VersionNumber() int {
-	return versionNumber(t)
+	return VersionNumber(t)
 }
 
 // CurrentNextIndicator returns the current_next_indicator.
 func (t CAT) CurrentNextIndicator() byte {
-	return currentNextIndicator(t)
+	return CurrentNextIndicator(t)
 }
 
 // SectionNumber returns the section_number.
 func (t CAT) SectionNumber() byte {
-	return sectionNumber(t)
+	return SectionNumber(t)
 }
 
 // LastSectionNumber returns the last_section_number.
 func (t CAT) LastSectionNumber() byte {
-	return lastSectionNumber(t)
+	return LastSectionNumber(t)
 }
 
 // Descriptors returns the descriptors.
@@ -216,22 +216,22 @@ func (t PMT) ProgramNumber() ProgramNumber {
 
 // VersionNumber returns the version_number.
 func (t PMT) VersionNumber() int {
-	return versionNumber(t)
+	return VersionNumber(t)
 }
 
 // CurrentNextIndicator returns the current_next_indicator.
 func (t PMT) CurrentNextIndicator() byte {
-	return currentNextIndicator(t)
+	return CurrentNextIndicator(t)
 }
 
 // SectionNumber returns the section_number.
 func (t PMT) SectionNumber() byte {
-	return sectionNumber(t)
+	return SectionNumber(t)
 }
 
 // LastSectionNumber returns the last_section_number.
 func (t PMT) LastSectionNumber() byte {
-	return lastSectionNumber(t)
+	return LastSectionNumber(t)
 }
 
 // PCRPID returns the PCR_PID.
@@ -286,18 +286,26 @@ func (i ProgramElementInfo) Descriptors() []Descriptor {
 	return Descriptors(i[5:])
 }
 
-func versionNumber(b []byte) int {
+// VersionNumber returns the version_number.
+// Not all of the PSI has this.
+func VersionNumber(b PSI) int {
 	return int(b[5] & 0x3E >> 1)
 }
 
-func currentNextIndicator(b []byte) byte {
+// CurrentNextIndicator returns the current_next_indicator.
+// Not all of the PSI has this.
+func CurrentNextIndicator(b PSI) byte {
 	return b[5] & 0x01
 }
 
-func sectionNumber(b []byte) byte {
+// SectionNumber returns the section_number.
+// Not all of the PSI has this.
+func SectionNumber(b PSI) byte {
 	return b[6]
 }
 
-func lastSectionNumber(b []byte) byte {
+// LastSectionNumber returns the last_section_number.
+// Not all of the PSI has this.
+func LastSectionNumber(b PSI) byte {
 	return b[7]
 }
