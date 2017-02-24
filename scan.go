@@ -20,7 +20,10 @@ import (
 	"io"
 )
 
-const packetDefaultSize = 188
+const (
+	packetDefaultSize = 188
+	sectionMinSize    = 3 // table_id .. section_length
+)
 
 // PacketScanner is a wrapper of bufio.Scanner.
 type PacketScanner struct {
@@ -226,7 +229,7 @@ func (sec *sectionBuffer) sendWithDepacketize(ch chan *SectionReceiver, payload 
 			sec.mergesend(buf, ch)
 		}
 
-		for pos+minSectionSize < size {
+		for pos+sectionMinSize < size {
 			pos += sec.init(payload[pos:])
 
 			high := pos + sec.size
