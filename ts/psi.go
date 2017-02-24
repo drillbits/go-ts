@@ -286,26 +286,26 @@ func (i ProgramElementInfo) Descriptors() []Descriptor {
 	return Descriptors(i[5:])
 }
 
-// VersionNumber returns the version_number.
+// VersionNumber returns the version_number from PSI bytes.
 // Not all of the PSI has this.
-func VersionNumber(b PSI) int {
+func VersionNumber(b []byte) int {
 	return int(b[5] & 0x3E >> 1)
 }
 
-// CurrentNextIndicator returns the current_next_indicator.
+// CurrentNextIndicator returns the current_next_indicator from PSI bytes.
 // Not all of the PSI has this.
-func CurrentNextIndicator(b PSI) byte {
+func CurrentNextIndicator(b []byte) byte {
 	return b[5] & 0x01
 }
 
-// SectionNumber returns the section_number.
+// SectionNumber returns the section_number from PSI bytes.
 // Not all of the PSI has this.
-func SectionNumber(b PSI) byte {
+func SectionNumber(b []byte) byte {
 	return b[6]
 }
 
-// LastSectionNumber returns the last_section_number.
+// LastSectionNumber returns the last_section_number from PSI bytes.
 // Not all of the PSI has this.
-func LastSectionNumber(b PSI) byte {
+func LastSectionNumber(b []byte) byte {
 	return b[7]
 }
