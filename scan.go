@@ -207,7 +207,6 @@ func (sec *sectionBuffer) flush() {
 func (sec *sectionBuffer) sendWithDepacketize(ch chan *SectionReceiver, payload Payload, atStart bool) {
 	if !atStart {
 		sec.mergesend(payload, ch)
-		return
 	}
 
 	pos := 0
@@ -243,10 +242,10 @@ func (sec *sectionBuffer) sendWithDepacketize(ch chan *SectionReceiver, payload 
 	}
 }
 
-func (sec *sectionBuffer) mergesend(payload Payload, ch chan *SectionReceiver) {
-	sec.buf = append(sec.buf, payload...)
-	sec.n += len(payload)
-	if sec.n == sec.size && len(sec.buf) > 0 {
+func (sec *sectionBuffer) mergesend(data []byte, ch chan *SectionReceiver) {
+	sec.buf = append(sec.buf, data...)
+	sec.n += len(data)
+	if sec.n >= sec.size && len(sec.buf) > 0 {
 		ch <- &SectionReceiver{sec.pid, sec.buf}
 		sec.flush()
 	}

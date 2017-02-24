@@ -58,6 +58,9 @@ func (rx *PacketReceiver) checkContinuously(pid PID, cc uint8) bool {
 		drop := false
 		pre := rx.cc
 		exp := pre + 1
+		if exp == 16 {
+			exp = 0
+		}
 		rx.cc = intCC
 		// dup
 		if pre == intCC {
