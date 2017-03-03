@@ -16,24 +16,16 @@ package ts
 
 import "io"
 
+// SyncByte is used to identify the start of the TS Packet.
+const SyncByte = 0x47
+
+// PIDs for packet.
 const (
-	// SyncByte is used to identify the start of the TS Packet.
-	SyncByte = 0x47
-
-	// PidPAT is the PID for PAT.
-	PidPAT = 0x0000
-
-	// PidCAT is the PID for CAT.
-	PidCAT = 0x0001
-
-	// PidTSDT is the PID for PMT.
-	PidTSDT = 0x0002
-
-	// PidIPMP is the PID for IPMP.
-	PidIPMP = 0x0003
-
-	// PidNull is the PID for null packet.
-	PidNull = 0x1FFF
+	PidPAT  = 0x0000 // PAT
+	PidCAT  = 0x0001 // CAT
+	PidTSDT = 0x0002 // TSDT
+	PidIPMP = 0x0003 // IPMP
+	PidNull = 0x1FFF // Null packet
 )
 
 // Packet is a Transport Stream(TS) packet.
