@@ -131,7 +131,7 @@ func (s *SectionScanner) Scan() {
 		}
 
 		// append
-		sec.sendWithDepacketize(s.ch, p.Payload(), p.IsPayloadUnitStart())
+		sec.depacketize(s.ch, p.Payload(), p.IsPayloadUnitStart())
 	}
 	err := ps.Err()
 	if err != nil {
@@ -207,7 +207,7 @@ func (sec *sectionBuffer) flush() {
 	sec.n = 0
 }
 
-func (sec *sectionBuffer) sendWithDepacketize(ch chan *SectionReceiver, payload Payload, atStart bool) {
+func (sec *sectionBuffer) depacketize(ch chan *SectionReceiver, payload Payload, atStart bool) {
 	if !atStart {
 		sec.mergesend(payload, ch)
 	}
